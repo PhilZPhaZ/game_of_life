@@ -68,18 +68,42 @@ class Board:
 
         With this method you can configure the grid before it is used in the game of life
         """
-        self._cells[5+10][6+10] = 1
-        self._cells[5+10][7+10] = 1
-        self._cells[5+10][8+10] = 1
-        self._cells[6+10][5+10] = 1
-        self._cells[6+10][8+10] = 1
-        self._cells[7+10][4+10] = 1
-        self._cells[7+10][8+10] = 1
-        self._cells[8+10][4+10] = 1
-        self._cells[8+10][7+10] = 1
-        self._cells[9+10][4+10] = 1
-        self._cells[9+10][5+10] = 1
-        self._cells[9+10][6+10] = 1
+        self._cells[5][1] = 1
+        self._cells[5][2] = 1
+        self._cells[6][1] = 1
+        self._cells[6][2] = 1
+        self._cells[5][11] = 1
+        self._cells[6][11] = 1
+        self._cells[7][11] = 1
+        self._cells[4][12] = 1
+        self._cells[3][13] = 1
+        self._cells[3][14] = 1
+        self._cells[8][12] = 1
+        self._cells[9][13] = 1
+        self._cells[9][14] = 1
+        self._cells[6][15] = 1
+        self._cells[4][16] = 1
+        self._cells[5][17] = 1
+        self._cells[6][17] = 1
+        self._cells[7][17] = 1
+        self._cells[6][18] = 1
+        self._cells[8][16] = 1
+        self._cells[3][21] = 1
+        self._cells[4][21] = 1
+        self._cells[5][21] = 1
+        self._cells[3][22] = 1
+        self._cells[4][22] = 1
+        self._cells[5][22] = 1
+        self._cells[2][23] = 1
+        self._cells[6][23] = 1
+        self._cells[1][25] = 1
+        self._cells[2][25] = 1
+        self._cells[6][25] = 1
+        self._cells[7][25] = 1
+        self._cells[3][35] = 1
+        self._cells[4][35] = 1
+        self._cells[3][36] = 1
+        self._cells[4][36] = 1
 
     def get_grid(self) -> list:
         """get_grid Return the grid
@@ -96,12 +120,15 @@ class GameTerminal:
 
     The game of life is printed on the terminal
     """
-    def __init__(self):
+    def __init__(self, width, height, iter):
         """__init__ The game of life is displayed on the terminal
 
         When you call the GameTerminal, the game of life is displayed on the terminal
         """
-        self.board = Board(30, 30)
+        self.iter = iter
+        self.width = width
+        self.height = height
+        self.board = Board(self.width, self.height)
         self.terminal = Terminal()
 
     def print_board(self, grid):
@@ -127,14 +154,14 @@ class GameTerminal:
             # Aller à la ligne suivante
             print()
         # Ajouter une pause pour que l'utilisateur ait le temps de voir la grille
-        time.sleep(.05)
+        time.sleep(.5)
 
     def function_app(self):
         """function_app launch the app
 
         Launch the app
         """
-        for _ in range(100):
+        for _ in range(self.iter):
             cells = self.board.get_grid()
             self.board.update()
             self.print_board(cells)
