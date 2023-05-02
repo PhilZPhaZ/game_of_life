@@ -187,8 +187,11 @@ class GameWindow:
         self.grid_cell_height = 10
         # Initialisation de pygame
         pygame.init()
+        self.logo = pygame.image.load('assets/logo.png')
         self.display = pygame.display.set_mode((width*self.grid_cell_width, height*self.grid_cell_height))
         pygame.display.get_surface().fill((200, 200, 200))
+        pygame.display.set_caption("Game of life")
+        pygame.display.set_icon(self.logo)
         pygame.display.update()
 
     def create_square(self, xpos, ypos, color):
