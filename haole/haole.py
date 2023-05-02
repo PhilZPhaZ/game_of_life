@@ -242,7 +242,3 @@ class GameWindow:
             cells = self.board.get_grid()
             self.visualization(cells)
             self.board.update()
-
-game = GameWindow(80, 80)
-game.setup()
-game.function_app()
