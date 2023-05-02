@@ -20,7 +20,6 @@ class Board:
         The grid is created and it is ready to use
         """
         self._cells = [[0 for _ in range(width)] for _ in range(height)]
-        self.basic()
 
     def update(self):
         """update Call this method and the grid is updated
@@ -63,7 +62,7 @@ class Board:
             if (k, l) != (x_cell, y_cell)
         )
 
-    def basic(self) -> None:
+    def setup(self) -> None:
         """basic Here you can pre-configure the grid
 
         With this method you can configure the grid before it is used in the game of life
@@ -226,6 +225,9 @@ class GameWindow:
             y_screen += self.grid_cell_height   # for every new row we move one "step" downwards
         pygame.display.update()
         time.sleep(.05)
+        
+    def setup(self):
+        self.board.setup()
 
     def function_app(self):
         """function_app launch the app
@@ -242,4 +244,5 @@ class GameWindow:
             self.board.update()
 
 game = GameWindow(80, 80)
+game.setup()
 game.function_app()
