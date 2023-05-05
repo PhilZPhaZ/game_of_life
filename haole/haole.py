@@ -213,19 +213,19 @@ class GameWindow():
             os.path.join(os.getcwd(), 'assets', 'logo.png'))
         self.display = pygame.display.set_mode(
             (width*self.grid_cell_width+400, height*self.grid_cell_height))
-        pygame.display.get_surface().fill((100, 100, 100))
+        self.background = pygame.Surface((width*self.grid_cell_width+400, height*self.grid_cell_height))
         pygame.display.set_caption("Game of life")
         pygame.display.set_icon(self.logo)
         self.clock = pygame.time.Clock()
         self.gui()
         # On creer le thread pour gerer l'affichage de la grille
-        self.visualize_thread = threading.Thread(target=self.update_screen).start()
+        self.visualize_thread = threading.Thread(target=self.update_screen)
+        self.visualize_thread.start()
 
     def update_screen(self):
         while True:
             cells = self.board.get_grid()
             self.visualization(cells)
-            pygame.display.update()
 
     def auto_update(self):
         while self.run.is_set():
@@ -243,7 +243,7 @@ class GameWindow():
         self.back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 50), (300, 50)),
             text='Generation precedente',
-            manager=self.manager,
+            manager=self.manager
         )
         self.number_generation_button = pygame_gui.elements.UITextEntryBox(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 110), (300, 50)),
@@ -270,6 +270,11 @@ class GameWindow():
             relative_rect=pygame.Rect((self.width*self.grid_cell_width+50, 350), (300, 50)),
             manager=self.manager
         )
+        self.set_speed_text = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.width*self.grid_cell_width+175, 410), (50, 50)),
+            text=str(self.set_speed_slider.get_current_value()),
+            manager=self.manager
+        )
 
     def create_square(self, xpos, ypos, color):
         """create_square create a square
@@ -281,7 +286,7 @@ class GameWindow():
             ypos (int): position y of the cell
             color (tuple): the color of the cell
         """
-        pygame.draw.rect(self.display, color, [
+        pygame.draw.rect(self.background, color, [
                          xpos, ypos, self.grid_cell_width, self.grid_cell_height])
 
     def visualization(self, grid):
@@ -333,6 +338,7 @@ class GameWindow():
                 print('erreur')
         if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED and event.ui_element == self.set_speed_slider:
             self.speed_generation = event.value
+            self.set_speed_text.set_text(str(event.value))
         self.manager.process_events(event)
 
     def listen_event_key_holded(self):
@@ -357,8 +363,12 @@ class GameWindow():
                 self.listen_event_auto_generation(event)
             self.listen_event_key_holded()
 
-            self.manager.draw_ui(self.display)
             self.manager.update(time_delta=time_delta)
+            
+            self.display.blit(self.background, (0, 0))
+            self.manager.draw_ui(self.display)
+            
+            pygame.display.update()
 
         pygame.quit()
         sys.exit()

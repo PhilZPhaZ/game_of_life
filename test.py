@@ -1,78 +1,52 @@
-
 import pygame
-from pygame_gui import UIManager, PackageResource
 
-from pygame_gui.elements import UIHorizontalSlider
-
-
-class SlideBar():
-    def __init__(self, ui_manager, screen, screen_width, screen_height):
-        self.ui_manager = ui_manager
-        self.screen = screen
-        self.screen_width = screen_width
-        self.screen_height = screen_height
-
-    def recreate_ui(self):
-        self.ui_manager.set_window_resolution(
-            (self.screen_width, self.screen_height))
-        self.ui_manager.clear_and_reset()
-
-    def create_slide_bar(self, pos_x, pos_y, init_value, min_v, max_v):
-        self.test_slider = UIHorizontalSlider(
-            pygame.Rect((int(pos_x),
-                         int(pos_y)),
-                        (240, 25)), init_value, (min_v, max_v),
-            self.ui_manager, object_id='#cool_slider')
-        return self.test_slider
-
-    def update_slider(self, slide_bar):
-        value_range = slide_bar.value_range[1] -\
-            slide_bar.value_range[0]
-        scroll_range = slide_bar.right_limit_position -\
-            slide_bar.left_limit_position
-        if slide_bar.left_button is not None and (
-                slide_bar.left_button.held and
-                slide_bar.scroll_position >
-                slide_bar.left_limit_position):
-            slide_bar.scroll_position -= scroll_range / value_range
-            slide_bar.current_value -= 1
-        elif slide_bar.right_button is not None and (
-                slide_bar.right_button.held and
-                slide_bar.scroll_position <
-                slide_bar.right_limit_position):
-            slide_bar.scroll_position += scroll_range / value_range
-            slide_bar.current_value += 1
+from pygame_gui import UIManager, UI_TEXT_ENTRY_CHANGED
+from pygame_gui.elements import UIWindow, UITextEntryBox, UITextBox
 
 
-if __name__ == '__main__':
-    pygame.init()
-    screen_width = 800
-    screen_height = 600
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    ui_manager = UIManager((screen_width, screen_height),
-                           PackageResource(package='data.themes',
-                                           resource='theme_2.json'))
-    background_surface = pygame.Surface((screen_width, screen_height))
-    background_surface.fill(
-        ui_manager.get_theme().get_colour('dark_bg'))
-    app = SlideBar(ui_manager, screen, screen_width, screen_height)
-    app.recreate_ui()
-    slide_bar1 = app.create_slide_bar(100, 120, 5, 5, 10)
-    running = True
-    while running:
+pygame.init()
 
-        # check for events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            ui_manager.process_events(event)
-        # respond to input
-        ui_manager.update(0.001)
-        app.update_slider(slide_bar1)
-        print(slide_bar1.scroll_position, slide_bar1.current_value)
 
-        # draw graphics
-        screen.blit(background_surface, (0, 0))
-        ui_manager.draw_ui(screen)
+pygame.display.set_caption('Pygame Notepad')
+window_surface = pygame.display.set_mode((800, 600))
+manager = UIManager((800, 600), 'data/themes/notepad_theme.json')
 
-        pygame.display.update()
+background = pygame.Surface((800, 600))
+background.fill(manager.ui_theme.get_colour('dark_bg'))
+
+
+notepad_window = UIWindow(pygame.Rect(50, 20, 300, 400), window_display_title="Pygame Notepad")
+
+output_window = UIWindow(pygame.Rect(400, 20, 300, 400), window_display_title="Pygame GUI Formatted Text")
+
+# swap to editable text box
+text_entry_box = UITextEntryBox(
+        relative_rect=pygame.Rect((0, 0), notepad_window.get_container().get_size()),
+        initial_text="",
+        container=notepad_window)
+
+text_output_box = UITextBox(
+        relative_rect=pygame.Rect((0, 0), output_window.get_container().get_size()),
+        html_text="",
+        container=output_window)
+
+clock = pygame.time.Clock()
+is_running = True
+
+while is_running:
+    time_delta = clock.tick(60)/1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            is_running = False
+
+        if event.type == UI_TEXT_ENTRY_CHANGED and event.ui_element == text_entry_box:
+            text_output_box.set_text(event.text)
+
+        manager.process_events(event)
+
+    manager.update(time_delta)
+
+    window_surface.blit(background, (0, 0))
+    manager.draw_ui(window_surface)
+
+    pygame.display.update()
