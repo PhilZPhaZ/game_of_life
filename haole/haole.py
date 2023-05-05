@@ -338,7 +338,7 @@ class GameWindow():
             self.manager.update(time_delta)
             self.manager.draw_ui(self.display)
         pygame.quit()
-
+        sys.exit()
 
 game = GameWindow(80, 80)
 game.setup()
