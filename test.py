@@ -1,19 +1,15 @@
 import threading
-import time
 
-# Fonction exécutée par le thread
-def mon_thread():
-    while True:
-        print("Thread en cours d'exécution...")
-        time.sleep(1)
-
-# Lancement du thread
-t = threading.Thread(target=mon_thread)
-t.start()
-
-# Attente de 5 secondes
-time.sleep(5)
-
-# Arrêt du thread
-t.kill()
-print("Thread arrêté.")
+class GameWindow:
+    def __init__(self):
+        self.run = threading.Event()
+        
+    def auto_update(self):
+        while self.run.is_set():
+            print('OK')
+    
+    def stop(self):
+        self.run.clear()
+    
+    def start(self):
+        self.run.start()

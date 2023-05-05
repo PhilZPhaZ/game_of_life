@@ -205,6 +205,7 @@ class GameWindow():
         self.board = Board(self.width, self.height)
         self.grid_cell_width = 10
         self.grid_cell_height = 10
+        self.run = threading.Event()
         # Initialisation de pygame
         pygame.init()
         self.logo = pygame.image.load(
@@ -217,16 +218,15 @@ class GameWindow():
         self.clock = pygame.time.Clock()
         self.gui()
         self.visualize = threading.Thread(target=self.update_screen).start()
-        self.auto_update = threading.Thread(target=self.auto_update)
 
     def update_screen(self):
         while True:
             cells = self.board.get_grid()
             self.visualization(cells)
-            pygame.display.flip()
+            pygame.display.update()
 
     def auto_update(self):
-        while self.run:
+        while self.run.is_set():
             self.board.update()
 
     def gui(self):
@@ -324,10 +324,12 @@ class GameWindow():
             except (TypeError, AttributeError):
                 print('erreur')
         if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_auto_generation:
-            self.run = True
-            self.auto_update.start()
+            self.run = threading.Event()
+            self.run.set()
+            self.auto_update_thread = threading.Thread(target=self.auto_update)
+            self.auto_update_thread.start()
         if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.stop_auto_generation:
-            self.run = False
+            self.run.clear()
         self.manager.process_events(event)
 
     def function_app(self):
