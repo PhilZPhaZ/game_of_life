@@ -5,6 +5,7 @@ This is a game of life
 import itertools
 import sys
 import os
+import threading
 import time
 import termcolor
 import pygame
@@ -215,6 +216,18 @@ class GameWindow():
         pygame.display.set_icon(self.logo)
         self.clock = pygame.time.Clock()
         self.gui()
+        self.visualize = threading.Thread(target=self.update_screen).start()
+        self.auto_update = threading.Thread(target=self.auto_update)
+
+    def update_screen(self):
+        while True:
+            cells = self.board.get_grid()
+            self.visualization(cells)
+            pygame.display.flip()
+
+    def auto_update(self):
+        while self.run:
+            self.board.update()
 
     def gui(self):
         self.manager = pygame_gui.UIManager(
@@ -231,15 +244,27 @@ class GameWindow():
             text='Generation precedente',
             manager=self.manager,
         )
-        
+
         self.number_generation_button = pygame_gui.elements.UITextEntryBox(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 110), (300, 50)),
             manager=self.manager
         )
-        
+
         self.start_generation_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 170), (300, 50)),
             text='Lancer la generation automatique',
+            manager=self.manager,
+        )
+
+        self.start_auto_generation = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
+            (self.width*self.grid_cell_width+50, 230), (300, 50)),
+            text='Generation en continue',
+            manager=self.manager,
+        )
+        
+        self.stop_auto_generation = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
+            (self.width*self.grid_cell_width+50, 290), (300, 50)),
+            text='Arreter la generation en continue',
             manager=self.manager,
         )
 
@@ -277,53 +302,46 @@ class GameWindow():
             # for every new row we move one "step" downwards
             y_screen += self.grid_cell_height
         time.sleep(.05)
-        pygame.display.update()
 
     def setup(self):
         self.board.setup()
-        self.visualization(self.board._cells)
+
+    def listen_event(self, event):
+        if (event.type == pygame.QUIT) or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+            pygame.quit()
+            sys.exit()
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE) or (event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT):
+            self.board.update()
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT) or (event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.back_button):
+            cells = self.board.back()
+            # self.visualization(cells)
+        if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED and event.ui_element == self.number_generation_button:
+            self.number_of_generation = event.text
+        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_generation_button:
+            try:
+                for _ in range(int(self.number_of_generation)):
+                    self.board.update()
+            except (TypeError, AttributeError):
+                print('erreur')
+        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_auto_generation:
+            self.run = True
+            self.auto_update.start()
+        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.stop_auto_generation:
+            self.run = False
+        self.manager.process_events(event)
 
     def function_app(self):
-        """function_app launch the app
+        """function_app Start the application
 
-        Launch the app
+        Start the application
         """
         while True:
             time_delta = self.clock.tick(60)/1000
             for event in pygame.event.get():
-                if (event.type == pygame.QUIT) or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    self.board.update()
-                    cells = self.board.get_grid()
-                    self.visualization(cells)
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
-                    self.board.update()
-                    cells = self.board.get_grid()
-                    self.visualization(cells)
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
-                    cells = self.board.back()
-                    self.visualization(cells)
-                if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.back_button:
-                    cells = self.board.back()
-                    self.visualization(cells)
-                if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED and event.ui_element == self.number_generation_button:
-                    self.number_of_generation = event.text
-                if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_generation_button:
-                    try:
-                        for _ in range(int(self.number_of_generation)):
-                            self.board.update()
-                            cells = self.board.get_grid()
-                            self.visualization(cells)
-                    except TypeError:
-                        pass
-                self.manager.process_events(event)
+                self.listen_event(event)
 
             self.manager.update(time_delta)
             self.manager.draw_ui(self.display)
-
-            pygame.display.update()
 
 
 game = GameWindow(80, 80)
