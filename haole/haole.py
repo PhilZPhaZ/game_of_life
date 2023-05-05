@@ -4,28 +4,35 @@ This is a game of life
 """
 import itertools
 import sys
+import os
 import time
 import termcolor
 import pygame
+import pygame_gui
 from blessings import Terminal
+
 
 class Board:
     """ Game of life core
 
     This is the game of life core and you can use whatever render you would like to use
     """
+
     def __init__(self, width, height):
         """__init__ Init method to create the grid
 
         The grid is created and it is ready to use
         """
         self._cells = [[0 for _ in range(width)] for _ in range(height)]
+        self.frame = 0
+        self.frames = {}
 
     def update(self):
         """update Call this method and the grid is updated
 
         Here is the core of the project and the grid is updated with the rules of the game of life
         """
+        self.frames[self.frame] = self._cells
         _new = []
         for x_cell, line in enumerate(self._cells):
             _new_line = []
@@ -37,9 +44,9 @@ class Board:
                     _new_line.append(1)
                 else:
                     _new_line.append(0)
-
             _new.append(_new_line)
         self._cells = _new
+        self.frame += 1
 
     def search_neighbors(self, x_cell: int, y_cell: int) -> int:
         """search_neighbors Search for all neighbors around a cell and count it
@@ -57,10 +64,19 @@ class Board:
             self._cells[k][l]
             for k, l in itertools.product(
                 range(max(0, x_cell - 1), min(x_cell + 2, len(self._cells))),
-                range(max(0, y_cell - 1), min(y_cell + 2, len(self._cells[0]))),
+                range(max(0, y_cell - 1),
+                      min(y_cell + 2, len(self._cells[0]))),
             )
             if (k, l) != (x_cell, y_cell)
         )
+
+    def back(self):
+        if self.frame == 0:
+            return self._cells
+        self.frame -= 1
+        self._cells = self.frames[self.frame]
+        self._cells.pop()
+        return self._cells
 
     def setup(self) -> None:
         """basic Here you can pre-configure the grid
@@ -114,11 +130,13 @@ class Board:
         """
         return self._cells
 
+
 class GameTerminal:
     """ The game of life is printed on the terminal
 
     The game of life is printed on the terminal
     """
+
     def __init__(self, width, height, iter):
         """__init__ The game of life is displayed on the terminal
 
@@ -165,11 +183,13 @@ class GameTerminal:
             self.board.update()
             self.print_board(cells)
 
-class GameWindow:
+
+class GameWindow():
     """ The game of life is display on a pygame display
 
     The game of life is display on a pygame display
     """
+
     def __init__(self, width, height) -> None:
         """__init__ The game of life is display on a pygame window
 
@@ -186,12 +206,31 @@ class GameWindow:
         self.grid_cell_height = 10
         # Initialisation de pygame
         pygame.init()
-        self.logo = pygame.image.load('assets/logo.png')
-        self.display = pygame.display.set_mode((width*self.grid_cell_width, height*self.grid_cell_height))
-        pygame.display.get_surface().fill((200, 200, 200))
+        self.logo = pygame.image.load(
+            os.path.join(os.getcwd(), 'assets', 'logo.png'))
+        self.display = pygame.display.set_mode(
+            (width*self.grid_cell_width+400, height*self.grid_cell_height))
+        pygame.display.get_surface().fill((100, 100, 100))
         pygame.display.set_caption("Game of life")
         pygame.display.set_icon(self.logo)
-        pygame.display.update()
+        self.clock = pygame.time.Clock()
+        self.gui()
+
+    def gui(self):
+        self.manager = pygame_gui.UIManager(
+            (self.width*self.grid_cell_width+400, self.height*self.grid_cell_height))
+
+        self.title = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(
+            (self.width*self.grid_cell_width+50, 0), (300, 50)),
+            text="Game of life",
+            manager=self.manager
+        )
+
+        self.back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
+            (self.width*self.grid_cell_width+50, 50), (300, 50)),
+            text='Generation precedente',
+            manager=self.manager,
+        )
 
     def create_square(self, xpos, ypos, color):
         """create_square create a square
@@ -203,7 +242,8 @@ class GameWindow:
             ypos (int): position y of the cell
             color (tuple): the color of the cell
         """
-        pygame.draw.rect(self.display, color, [xpos, ypos, self.grid_cell_width, self.grid_cell_height])
+        pygame.draw.rect(self.display, color, [
+                         xpos, ypos, self.grid_cell_width, self.grid_cell_height])
 
     def visualization(self, grid):
         """visualization Visualize 1 frame of the grid
@@ -215,19 +255,21 @@ class GameWindow:
         """
         y_screen = 0  # we start at the top of the screen
         for row in grid:
-            x_screen = 0 # for every row we start at the left of the screen again
+            x_screen = 0  # for every row we start at the left of the screen again
             for item in row:
                 if item == 0:
                     self.create_square(x_screen, y_screen, (255, 255, 255))
                 else:
                     self.create_square(x_screen, y_screen, (0, 0, 0))
-                x_screen += self.grid_cell_width # for ever item/number in that row we move one "step" to the right
-            y_screen += self.grid_cell_height   # for every new row we move one "step" downwards
-        pygame.display.update()
+                # for ever item/number in that row we move one "step" to the right
+                x_screen += self.grid_cell_width
+            # for every new row we move one "step" downwards
+            y_screen += self.grid_cell_height
         time.sleep(.05)
-        
+
     def setup(self):
         self.board.setup()
+        self.visualization(self.board._cells)
 
     def function_app(self):
         """function_app launch the app
@@ -235,10 +277,29 @@ class GameWindow:
         Launch the app
         """
         while True:
+            time_delta = self.clock.tick(60)/1000
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if (event.type == pygame.QUIT) or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     pygame.quit()
                     sys.exit()
-            cells = self.board.get_grid()
-            self.visualization(cells)
-            self.board.update()
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    self.board.update()
+                    cells = self.board.get_grid()
+                    self.visualization(cells)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                    cells = self.board.back()
+                    self.visualization(cells)
+                if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.back_button:
+                    cells = self.board.back()
+                    self.visualization(cells)
+                self.manager.process_events(event)
+
+            self.manager.update(time_delta)
+            self.manager.draw_ui(self.display)
+
+            pygame.display.update()
+
+
+game = GameWindow(80, 80)
+game.setup()
+game.function_app()
