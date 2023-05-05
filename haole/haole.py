@@ -207,7 +207,6 @@ class GameWindow():
         self.grid_cell_height = 10
         self.run = threading.Event()
         # Initialisation de pygame
-        pygame.init()
         self.logo = pygame.image.load(
             os.path.join(os.getcwd(), 'assets', 'logo.png'))
         self.display = pygame.display.set_mode(
@@ -300,6 +299,15 @@ class GameWindow():
     def setup(self):
         self.board.setup()
 
+    def listen_event_auto_generation(self, event):
+        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_auto_generation:
+            self.run = threading.Event()
+            self.run.set()
+            self.auto_update_thread = threading.Thread(target=self.auto_update)
+            self.auto_update_thread.start()
+        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.stop_auto_generation:
+            self.run.clear()
+
     def listen_event(self, event):
         if (event.type == pygame.QUIT) or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             self.running = False
@@ -315,13 +323,6 @@ class GameWindow():
                     self.board.update()
             except (TypeError, AttributeError):
                 print('erreur')
-        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_auto_generation:
-            self.run = threading.Event()
-            self.run.set()
-            self.auto_update_thread = threading.Thread(target=self.auto_update)
-            self.auto_update_thread.start()
-        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.stop_auto_generation:
-            self.run.clear()
         self.manager.process_events(event)
 
     def function_app(self):
@@ -334,6 +335,7 @@ class GameWindow():
             time_delta = self.clock.tick(60)/1000
             for event in pygame.event.get():
                 self.listen_event(event)
+                self.listen_event_auto_generation(event)
 
             self.manager.update(time_delta)
             self.manager.draw_ui(self.display)
