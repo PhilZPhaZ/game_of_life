@@ -205,8 +205,10 @@ class GameWindow():
         self.board = Board(self.width, self.height)
         self.grid_cell_width = 10
         self.grid_cell_height = 10
+        self.speed_generation = 1
         self.run = threading.Event()
         # Initialisation de pygame
+        pygame.init()
         self.logo = pygame.image.load(
             os.path.join(os.getcwd(), 'assets', 'logo.png'))
         self.display = pygame.display.set_mode(
@@ -216,7 +218,8 @@ class GameWindow():
         pygame.display.set_icon(self.logo)
         self.clock = pygame.time.Clock()
         self.gui()
-        self.visualize = threading.Thread(target=self.update_screen).start()
+        # On creer le thread pour gerer l'affichage de la grille
+        self.visualize_thread = threading.Thread(target=self.update_screen).start()
 
     def update_screen(self):
         while True:
@@ -227,6 +230,7 @@ class GameWindow():
     def auto_update(self):
         while self.run.is_set():
             self.board.update()
+            pygame.time.wait(self.speed_generation)
 
     def gui(self):
         self.manager = pygame_gui.UIManager(
@@ -259,6 +263,12 @@ class GameWindow():
             (self.width*self.grid_cell_width+50, 290), (300, 50)),
             text='Arreter la generation en continue',
             manager=self.manager,
+        )
+        self.set_speed_slider = pygame_gui.elements.UIHorizontalSlider(
+            start_value=1,
+            value_range=(1, 100),
+            relative_rect=pygame.Rect((self.width*self.grid_cell_width+50, 350), (300, 50)),
+            manager=self.manager
         )
 
     def create_square(self, xpos, ypos, color):
@@ -294,7 +304,7 @@ class GameWindow():
                 x_screen += self.grid_cell_width
             # for every new row we move one "step" downwards
             y_screen += self.grid_cell_height
-        time.sleep(.05)
+        pygame.time.wait(50)
 
     def setup(self):
         self.board.setup()
@@ -311,9 +321,7 @@ class GameWindow():
     def listen_event(self, event):
         if (event.type == pygame.QUIT) or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             self.running = False
-        if (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE) or (event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT):
-            self.board.update()
-        if (event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT) or (event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.back_button):
+        if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.back_button:
             self.board.back()
         if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED and event.ui_element == self.number_generation_button:
             self.number_of_generation = event.text
@@ -323,7 +331,18 @@ class GameWindow():
                     self.board.update()
             except (TypeError, AttributeError):
                 print('erreur')
+        if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED and event.ui_element == self.set_speed_slider:
+            self.speed_generation = event.value
         self.manager.process_events(event)
+
+    def listen_event_key_holded(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] or keys[pygame.K_RIGHT]:
+            self.board.update()
+            pygame.time.wait(100)
+        if keys[pygame.K_LEFT]:
+            self.board.back()
+            pygame.time.wait(100)
 
     def function_app(self):
         """function_app Start the application
@@ -331,14 +350,16 @@ class GameWindow():
         Start the application
         """
         self.running = True
+        time_delta = self.clock.tick(60)/1000
         while self.running:
-            time_delta = self.clock.tick(60)/1000
             for event in pygame.event.get():
                 self.listen_event(event)
                 self.listen_event_auto_generation(event)
+            self.listen_event_key_holded()
 
-            self.manager.update(time_delta)
             self.manager.draw_ui(self.display)
+            self.manager.update(time_delta=time_delta)
+
         pygame.quit()
         sys.exit()
 
