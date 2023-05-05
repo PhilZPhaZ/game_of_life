@@ -138,12 +138,12 @@ class GameTerminal:
     The game of life is printed on the terminal
     """
 
-    def __init__(self, width, height, iter):
+    def __init__(self, width, height, iteration):
         """__init__ The game of life is displayed on the terminal
 
         When you call the GameTerminal, the game of life is displayed on the terminal
         """
-        self.iter = iter
+        self.iter = iteration
         self.width = width
         self.height = height
         self.board = Board(self.width, self.height)
@@ -232,36 +232,30 @@ class GameWindow():
     def gui(self):
         self.manager = pygame_gui.UIManager(
             (self.width*self.grid_cell_width+400, self.height*self.grid_cell_height))
-
         self.title = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 0), (300, 50)),
             text="Game of life",
             manager=self.manager
         )
-
         self.back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 50), (300, 50)),
             text='Generation precedente',
             manager=self.manager,
         )
-
         self.number_generation_button = pygame_gui.elements.UITextEntryBox(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 110), (300, 50)),
             manager=self.manager
         )
-
         self.start_generation_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 170), (300, 50)),
             text='Lancer la generation automatique',
             manager=self.manager,
         )
-
         self.start_auto_generation = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 230), (300, 50)),
             text='Generation en continue',
             manager=self.manager,
         )
-        
         self.stop_auto_generation = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
             (self.width*self.grid_cell_width+50, 290), (300, 50)),
             text='Arreter la generation en continue',
@@ -308,13 +302,11 @@ class GameWindow():
 
     def listen_event(self, event):
         if (event.type == pygame.QUIT) or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-            pygame.quit()
-            sys.exit()
+            self.running = False
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE) or (event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT):
             self.board.update()
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT) or (event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.back_button):
-            cells = self.board.back()
-            # self.visualization(cells)
+            self.board.back()
         if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED and event.ui_element == self.number_generation_button:
             self.number_of_generation = event.text
         if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_generation_button:
@@ -337,13 +329,15 @@ class GameWindow():
 
         Start the application
         """
-        while True:
+        self.running = True
+        while self.running:
             time_delta = self.clock.tick(60)/1000
             for event in pygame.event.get():
                 self.listen_event(event)
 
             self.manager.update(time_delta)
             self.manager.draw_ui(self.display)
+        pygame.quit()
 
 
 game = GameWindow(80, 80)
