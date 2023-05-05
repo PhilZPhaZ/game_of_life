@@ -231,6 +231,17 @@ class GameWindow():
             text='Generation precedente',
             manager=self.manager,
         )
+        
+        self.number_generation_button = pygame_gui.elements.UITextEntryBox(relative_rect=pygame.Rect(
+            (self.width*self.grid_cell_width+50, 110), (300, 50)),
+            manager=self.manager
+        )
+        
+        self.start_generation_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(
+            (self.width*self.grid_cell_width+50, 170), (300, 50)),
+            text='Lancer la generation automatique',
+            manager=self.manager,
+        )
 
     def create_square(self, xpos, ypos, color):
         """create_square create a square
@@ -266,6 +277,7 @@ class GameWindow():
             # for every new row we move one "step" downwards
             y_screen += self.grid_cell_height
         time.sleep(.05)
+        pygame.display.update()
 
     def setup(self):
         self.board.setup()
@@ -286,12 +298,26 @@ class GameWindow():
                     self.board.update()
                     cells = self.board.get_grid()
                     self.visualization(cells)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                    self.board.update()
+                    cells = self.board.get_grid()
+                    self.visualization(cells)
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
                     cells = self.board.back()
                     self.visualization(cells)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.back_button:
                     cells = self.board.back()
                     self.visualization(cells)
+                if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED and event.ui_element == self.number_generation_button:
+                    self.number_of_generation = event.text
+                if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == self.start_generation_button:
+                    try:
+                        for _ in range(int(self.number_of_generation)):
+                            self.board.update()
+                            cells = self.board.get_grid()
+                            self.visualization(cells)
+                    except TypeError:
+                        pass
                 self.manager.process_events(event)
 
             self.manager.update(time_delta)
