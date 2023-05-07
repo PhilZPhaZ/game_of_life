@@ -6,12 +6,8 @@ import itertools
 import sys
 import os
 import threading
-import time
-import termcolor
 import pygame
 import pygame_gui
-from blessings import Terminal
-
 
 class Board:
     """ Game of life core
@@ -130,59 +126,6 @@ class Board:
             list: Return the grid
         """
         return self._cells
-
-
-class GameTerminal:
-    """ The game of life is printed on the terminal
-
-    The game of life is printed on the terminal
-    """
-
-    def __init__(self, width, height, iteration):
-        """__init__ The game of life is displayed on the terminal
-
-        When you call the GameTerminal, the game of life is displayed on the terminal
-        """
-        self.iter = iteration
-        self.width = width
-        self.height = height
-        self.board = Board(self.width, self.height)
-        self.terminal = Terminal()
-
-    def print_board(self, grid):
-        """print_board Print the board
-
-        The board is printed
-
-        Args:
-            grid (list): The list to be printed
-        """
-        # Déplacer le curseur au coin supérieur gauche du terminal
-        print(self.terminal.move(0, 0))
-
-        # Parcourir les éléments de la grille
-        for row in grid:
-            for cell in row:
-                # Si la cellule est vivante, la colorer en vert
-                if cell == 1:
-                    print(termcolor.colored('\u25A0', 'red'), end=' ')
-                # Sinon, la laisser en blanc
-                else:
-                    print('\u25A0', end=' ')
-            # Aller à la ligne suivante
-            print()
-        # Ajouter une pause pour que l'utilisateur ait le temps de voir la grille
-        time.sleep(.5)
-
-    def function_app(self):
-        """function_app launch the app
-
-        Launch the app
-        """
-        for _ in range(self.iter):
-            cells = self.board.get_grid()
-            self.board.update()
-            self.print_board(cells)
 
 
 class GameWindow():

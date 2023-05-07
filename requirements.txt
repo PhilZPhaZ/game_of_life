@@ -1,4 +1,2 @@
-blessings==1.7
 pygame==2.0.2
-termcolor==2.3.0
 pygame_gui==0.6.9
